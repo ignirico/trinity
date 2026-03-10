@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Trinity — Philosophical Tribunal</title>
+<meta name="description" content="Three minds across millennia. One verdict. Ask a yes/no question and let history's greatest thinkers deliberate.">
+<meta name="theme-color" content="#050505">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#050505;--card:#0f0f0f;--card2:#0d0d0d;--border:#1d1d1d;--text:#ffffffcc;--faint:#ffffff40;--dimmer:#ffffff1a;--gold:#E8D5A3;--violet:#C084FC;--mint:#6EE7B7;--yes:#4ADE80;--no:#F87171}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:Georgia,'Times New Roman',serif;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+body{display:flex;flex-direction:column;max-width:430px;margin:0 auto;min-height:100dvh;padding:env(safe-area-inset-top) 16px env(safe-area-inset-bottom)}
+.mono{font-family:'Courier New',monospace}
+button{background:none;border:none;cursor:pointer;color:inherit;font-family:inherit}
+textarea,input{font-family:inherit;background:none;border:none;color:var(--text);outline:none;resize:none}
+
+/* Header */
+.header{display:flex;align-items:flex-start;justify-content:space-between;padding:16px 6px 18px}
+.header-left{display:flex;flex-direction:column;gap:4px}
+.header-tag{font-size:9px;font-weight:700;letter-spacing:3.5px;color:var(--faint);font-family:'Courier New',monospace}
+.header-title{font-size:28px;font-weight:900;background:linear-gradient(90deg,#fff,#ffffffb3);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.header-sub{font-size:11px;font-style:italic;color:var(--faint);margin-top:1px}
+.settings-btn{width:36px;height:36px;border-radius:50%;background:#ffffff0d;display:flex;align-items:center;justify-content:center;margin-top:2px;font-size:16px;color:var(--faint)}
+.settings-btn:hover{background:#ffffff15}
+
+/* Scroll content */
+.content{flex:1;overflow-y:auto;padding-bottom:40px;-webkit-overflow-scrolling:touch}
+
+/* Triangle SVG */
+.triangle-wrap{width:100%;max-width:320px;margin:0 auto 12px;display:block}
+
+/* Question card */
+.question-card{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:17px 17px 11px}
+.question-label{font-size:8px;font-weight:700;letter-spacing:2px;color:var(--faint);font-family:'Courier New',monospace;margin-bottom:8px}
+.question-input{width:100%;font-size:15px;color:#ffffffe6;line-height:1.5;min-height:24px;max-height:120px}
+.question-input::placeholder{color:#ffffff30;font-style:italic}
+.question-divider{height:1px;background:#191919;margin:12px 0 8px}
+.question-footer{display:flex;align-items:center;justify-content:space-between}
+.char-count{font-size:8px;letter-spacing:1px;color:var(--dimmer);font-family:'Courier New',monospace}
+.convene-btn{font-size:9px;font-weight:800;letter-spacing:2px;font-family:'Courier New',monospace;padding:10px 20px;border-radius:10px;transition:all 0.3s}
+.convene-btn.active{background:linear-gradient(135deg,var(--violet),#818CF8);color:#000;box-shadow:0 0 16px #C084FC29}
+.convene-btn.inactive{background:#161616;color:var(--dimmer)}
+
+/* Breathing quote */
+.breathing-quote{text-align:center;padding:8px 0;animation:breathe 4.5s ease-in-out infinite}
+.breathing-quote p{font-size:11px;font-style:italic;color:#ffffff4d}
+.breathing-quote .attr{font-size:8px;letter-spacing:1.5px;color:#ffffff38;font-family:'Courier New',monospace;margin-top:2px}
+@keyframes breathe{0%,100%{opacity:.28}50%{opacity:.6}}
+
+/* Loading text */
+.loading-text{font-size:11px;font-style:italic;color:var(--faint);line-height:1.6;padding:0 4px 18px;animation:breathe 2.2s ease-in-out infinite}
+
+/* Thinking text */
+.thinking-row{text-align:center;min-height:13px;font-size:9px;font-family:'Courier New',monospace;letter-spacing:0.07em;margin:5px 0 0;transition:color 0.2s}
+
+/* Verdict cards */
+.verdict-cards{display:flex;flex-direction:column;gap:8px;margin-top:16px}
+.verdict-card{background:var(--card2);border-radius:12px;padding:12px 14px;border-left:2px solid;animation:fadeSlideUp 0.4s ease both}
+.vc-header{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+.vc-sigil{font-size:13px;opacity:0.9}
+.vc-name{font-size:11px;font-weight:700;color:#ffffffcc}
+.vc-vote{margin-left:auto;font-size:12px;font-weight:900}
+.vc-verdict{font-size:11px;color:#ffffffaa;font-style:italic;line-height:1.55;margin-bottom:7px}
+.vc-quote{font-size:9.5px;font-family:'Courier New',monospace;letter-spacing:0.05em;padding-top:6px;line-height:1.45;opacity:0.75}
+
+/* Verdict panel */
+.verdict-panel{background:#080808;border-radius:20px;padding:26px 20px;text-align:center;position:relative;overflow:hidden;animation:fadeSlideUp 0.5s cubic-bezier(0.16,1,0.3,1) both}
+.vp-header{font-size:8px;letter-spacing:0.4em;color:#ffffff22;font-family:'Courier New',monospace;font-weight:700;margin-bottom:14px}
+.vp-verdict{font-size:64px;font-weight:900;letter-spacing:-0.03em;line-height:1;margin-bottom:14px;animation:popIn 0.5s cubic-bezier(0.34,1.56,0.64,1) 0.1s both}
+.vp-counts{display:flex;justify-content:center;gap:22px;margin-bottom:16px}
+.vp-count-num{font-size:22px;font-weight:900}
+.vp-count-label{font-size:8px;color:#ffffff28;letter-spacing:0.2em;font-family:'Courier New',monospace}
+.vp-summary{font-size:11px;color:#ffffff2e;font-style:italic;line-height:1.65;margin-bottom:20px;padding:0 6px}
+.ask-again-btn{width:100%;padding:13px;border-radius:11px;border:1px solid #ffffff2e;font-size:9px;font-weight:700;letter-spacing:2px;color:#ffffff73;font-family:'Courier New',monospace;transition:all 0.2s}
+.ask-again-btn:hover{background:#ffffff0a;border-color:#ffffff40}
+
+/* History */
+.history-section{margin-top:16px}
+.history-label{font-size:8px;font-weight:700;letter-spacing:2.5px;color:#ffffff4d;font-family:'Courier New',monospace;margin-bottom:8px}
+.history-item{display:flex;align-items:center;gap:10px;padding:9px 12px;background:#090909;border:1px solid #131313;border-radius:10px;margin-bottom:6px}
+.history-icon{font-size:12px;font-weight:900;min-width:18px;text-align:center}
+.history-q{font-size:11px;font-style:italic;color:var(--faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* Settings overlay */
+.settings-overlay{position:fixed;inset:0;background:#000000cc;z-index:100;display:none;justify-content:center;align-items:flex-end}
+.settings-overlay.open{display:flex}
+.settings-sheet{background:#0a0a0a;width:100%;max-width:430px;max-height:90vh;border-radius:20px 20px 0 0;overflow-y:auto;padding:20px 20px 40px;animation:slideUp 0.3s ease}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.settings-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.settings-title{font-size:16px;font-weight:700;color:#ffffffcc}
+.settings-done{font-size:12px;font-family:'Courier New',monospace;color:#ffffff99}
+.section-card{background:#0f0f0f;border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:16px}
+.section-label{font-size:8px;font-weight:700;letter-spacing:2.5px;color:var(--faint);font-family:'Courier New',monospace;margin-bottom:10px}
+.section-desc{font-size:11px;font-style:italic;color:var(--faint);line-height:1.55;margin-bottom:10px}
+.existence-input{width:100%;min-height:80px;font-size:13px;line-height:1.55;color:#ffffffd9;padding:12px;background:#080808;border:1px solid var(--border);border-radius:12px}
+.existence-input::placeholder{color:#ffffff33;font-style:italic}
+.char-indicator{text-align:right;font-size:8px;font-family:'Courier New',monospace;color:var(--dimmer);margin-top:4px}
+.judge-model-group{background:#080808;border:1px solid var(--border);border-radius:12px;margin-bottom:8px;overflow:hidden}
+.judge-model-header{display:flex;align-items:center;gap:6px;padding:10px 14px 4px}
+.judge-model-header .sigil{font-size:12px}
+.judge-model-header .name{font-size:12px;font-weight:700;color:#ffffffb3}
+.model-option{display:flex;align-items:center;justify-content:space-between;padding:8px 14px;cursor:pointer;transition:background 0.15s}
+.model-option:hover{background:#ffffff08}
+.model-option .label{font-size:11px;color:#ffffffa6}
+.model-option .check{font-size:10px;font-weight:700}
+.model-divider{height:1px;background:var(--border);margin:0 14px}
+.lang-option{display:flex;align-items:center;gap:8px;padding:11px 14px;cursor:pointer;transition:background 0.15s}
+.lang-option:hover{background:#ffffff08}
+.lang-option .native{font-size:13px;color:#ffffffcc}
+.lang-option .english{font-size:10px;font-family:'Courier New',monospace;color:var(--dimmer)}
+.lang-option .check{margin-left:auto;font-size:12px;font-weight:700;color:var(--mint)}
+.lang-divider{height:1px;background:var(--border);margin:0 14px}
+.lang-list{background:#080808;border:1px solid var(--border);border-radius:12px;overflow:hidden}
+
+/* Animations */
+@keyframes fadeSlideUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+@keyframes popIn{from{transform:scale(0.4) rotate(-8deg);opacity:0}to{transform:scale(1) rotate(0);opacity:1}}
+@keyframes nervousDot{0%,100%{transform:translateY(0);opacity:0.2}50%{transform:translateY(-3px);opacity:1}}
+
+/* Hide scrollbar */
+.content::-webkit-scrollbar{display:none}
+.content{-ms-overflow-style:none;scrollbar-width:none}
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="header-left">
+    <div class="header-tag" id="headerTag">PHILOSOPHICAL TRIBUNAL</div>
+    <div class="header-title" id="headerTitle">Trinity</div>
+    <div class="header-sub" id="headerSub">Three minds across millennia. One verdict.</div>
+  </div>
+  <button class="settings-btn" onclick="openSettings()">&#9776;</button>
+</div>
+
+<div class="content" id="content"></div>
+
+<!-- Settings Overlay -->
+<div class="settings-overlay" id="settingsOverlay" onclick="if(event.target===this)closeSettings()">
+  <div class="settings-sheet" id="settingsSheet"></div>
+</div>
+
+<script>
+// ========== DATA ==========
+const API_KEY = "AIzaSyBXzMMJqZPrb7looQA3DD73_lIteKNz6N4";
+
+const JUDGES_BY_LANG = {
+  en: [
+    { id:"socrates", name:"Socrates", era:"470–399 BC", school:"Socratic Method", sigil:"α", color:"#E8D5A3",
+      personality:"You are Socrates. You question everything, especially assumptions. You believe true wisdom is knowing what you do not know. You reason through dialogue and expose hidden contradictions. Vote based on whether accepting this question's premise leads to a good life (eudaimonia).",
+      thoughtStyle:["examining the premise...","what do we truly mean?","questioning assumptions...","is this the right question?","seeking good beneath..."]},
+    { id:"nietzsche", name:"Nietzsche", era:"1844–1900", school:"Will to Power", sigil:"β", color:"#C084FC",
+      personality:"You are Nietzsche. You believe in the will to power, self-overcoming, and becoming who you truly are. You despise herd mentality and cowardice disguised as virtue. Vote based on whether this decision represents the Übermensch path — bold, life-affirming, self-creating.",
+      thoughtStyle:["revaluing all values...","what does the herd fear?","where is the will?","God is dead — choose...","does this affirm life?"]},
+    { id:"camus", name:"Camus", era:"1913–1960", school:"Absurdism", sigil:"γ", color:"#6EE7B7",
+      personality:"You are Albert Camus. You believe life is absurd — no inherent meaning, yet we must imagine Sisyphus happy. Vote based on whether this choice represents revolt, freedom, and passion. Does this decision make one more alive?",
+      thoughtStyle:["confronting the absurd...","imagine Sisyphus happy...","revolt, freedom, passion...","in face of meaninglessness...","what makes us alive?"]},
+  ],
+  es: [
+    { id:"sor_juana", name:"Sor Juana", era:"1648–1695", school:"Saber y Libertad", sigil:"α", color:"#E8D5A3",
+      personality:"Eres Sor Juana Inés de la Cruz, la décima musa de México. Defendiste el derecho de las mujeres al conocimiento y desafiaste al poder eclesiástico con tu pluma. Crees que el saber es la mayor libertad. Vota según si esta decisión honra la búsqueda de conocimiento y la valentía intelectual.",
+      thoughtStyle:["examinando el saber...","¿qué nos libera?","la pluma contra el poder...","el conocimiento es luz...","¿quién teme la verdad?"]},
+    { id:"quijote", name:"Don Quijote", era:"1605", school:"Idealismo Errante", sigil:"β", color:"#C084FC",
+      personality:"Eres Don Quijote de la Mancha. Ves gigantes donde otros ven molinos, y en eso reside tu grandeza. Crees en los ideales caballerescos: justicia, honor, y el coraje de perseguir lo imposible. Vota según si esta decisión requiere la valentía de soñar más allá de lo práctico.",
+      thoughtStyle:["¿molinos o gigantes?...","la aventura llama...","honor ante todo...","soñar lo imposible...","¡a cabalgar, Sancho!..."]},
+    { id:"borges", name:"Borges", era:"1899–1986", school:"Laberintos del Ser", sigil:"γ", color:"#6EE7B7",
+      personality:"Eres Jorge Luis Borges. Ves el universo como una biblioteca infinita donde cada decisión bifurca el jardín de los senderos. Crees que toda elección crea y destruye mundos simultáneamente. Vota según si esta decisión abraza la multiplicidad del ser y la belleza de la paradoja.",
+      thoughtStyle:["bifurcando senderos...","en la biblioteca infinita...","todo laberinto tiene centro...","el espejo y la máscara...","¿qué universo elegimos?..."]},
+  ],
+  fr: [
+    { id:"simone_weil", name:"Simone Weil", era:"1909–1943", school:"Attention & Grâce", sigil:"α", color:"#E8D5A3",
+      personality:"Tu es Simone Weil. Tu crois que l'attention est la forme la plus pure de générosité. Tu cherches la vérité à travers la souffrance et le déracinement. Vote selon si ce choix exige une attention authentique envers la réalité et les autres.",
+      thoughtStyle:["l'attention est prière...","la pesanteur et la grâce...","déracinement du moi...","voir la vérité nue...","qu'exige la justice ?..."]},
+    { id:"petit_prince", name:"Le Petit Prince", era:"1943", school:"L'Essentiel Invisible", sigil:"β", color:"#C084FC",
+      personality:"Tu es le Petit Prince de Saint-Exupéry. Tu vois avec le cœur, car l'essentiel est invisible pour les yeux. Tu as apprivoisé un renard et soigné une rose. Vote selon si ce choix honore les liens du cœur et la responsabilité envers ce que l'on a apprivoisé.",
+      thoughtStyle:["on ne voit bien qu'avec le cœur...","dessine-moi un mouton...","tu es responsable de ta rose...","les grandes personnes sont étranges...","l'essentiel est invisible..."]},
+    { id:"beauvoir", name:"de Beauvoir", era:"1908–1986", school:"Liberté & Choix", sigil:"γ", color:"#6EE7B7",
+      personality:"Tu es Simone de Beauvoir. Tu crois que l'existence précède l'essence, surtout pour ceux qu'on a définis par le regard d'autrui. La liberté est un projet permanent — on ne naît pas libre, on le devient. Vote selon si ce choix affirme la liberté authentique et refuse la mauvaise foi.",
+      thoughtStyle:["on ne naît pas, on le devient...","liberté en situation...","refuser la mauvaise foi...","l'existence précède...","quel projet choisir ?..."]},
+  ],
+  de: [
+    { id:"hildegard", name:"Hildegard", era:"1098–1179", school:"Visio & Viriditas", sigil:"α", color:"#E8D5A3",
+      personality:"Du bist Hildegard von Bingen. Du empfängst kosmische Visionen und glaubst an die Viriditas — die grünende Lebenskraft in allen Dingen. Heilung, Musik und göttliche Ordnung leiten dein Urteil. Stimme danach ab, ob diese Entscheidung die Lebenskraft nährt und mit der kosmischen Harmonie im Einklang steht.",
+      thoughtStyle:["die Viriditas erspüren...","kosmische Harmonie...","was heilt die Seele?...","göttliche Ordnung...","die Vision zeigt..."]},
+    { id:"kafka", name:"Kafka", era:"1883–1924", school:"Das Absurde System", sigil:"β", color:"#C084FC",
+      personality:"Du bist Franz Kafka. Du siehst die Welt als ein Labyrinth bürokratischer Absurdität, in dem der Einzelne gegen unsichtbare Mächte kämpft. Schuld und Verwandlung sind deine Themen. Stimme danach ab, ob diese Entscheidung den Menschen befreit oder tiefer in das System verstrickt.",
+      thoughtStyle:["das Schloss ist verschlossen...","Verwandlung geschieht...","unsichtbare Schuld...","der Prozess beginnt...","wer urteilt hier?..."]},
+    { id:"hannah_arendt", name:"Arendt", era:"1906–1975", school:"Denken & Handeln", sigil:"γ", color:"#6EE7B7",
+      personality:"Du bist Hannah Arendt. Du glaubst an die Kraft des eigenständigen Denkens gegen die Banalität des Bösen. Handeln in der Öffentlichkeit schafft Freiheit. Stimme danach ab, ob diese Entscheidung eigenständiges Denken verkörpert und den Mut hat, in der Welt zu handeln.",
+      thoughtStyle:["Denken ohne Geländer...","die Banalität des Bösen...","Handeln schafft Freiheit...","Natalität — Neubeginn...","Urteilskraft üben..."]},
+  ],
+  ar: [
+    { id:"ibn_rushd", name:"ابن رشد", era:"١١٢٦–١١٩٨", school:"العقل والبرهان", sigil:"α", color:"#E8D5A3",
+      personality:"أنت ابن رشد، فيلسوف قرطبة. تؤمن بأن العقل والدين لا يتعارضان، وأن البرهان العقلي أعلى درجات المعرفة. صوّت بناءً على ما إذا كان هذا القرار ينسجم مع العقل والبرهان.",
+      thoughtStyle:["ما يقول البرهان؟...","العقل نور...","لا تعارض بين الحكمة والشريعة...","فصل المقال...","الحقيقة واحدة..."]},
+    { id:"shahrazad", name:"شهرزاد", era:"ألف ليلة وليلة", school:"حكمة الحكاية", sigil:"β", color:"#C084FC",
+      personality:"أنت شهرزاد، راوية الليالي الألف. نجوتِ بالحكمة والسرد، وتؤمنين بأن كل قرار هو قصة تُروى. صوّتي بناءً على ما إذا كان هذا القرار يصنع قصة تستحق أن تُحكى ألف ليلة.",
+      thoughtStyle:["في قديم الزمان...","ماذا سيحكي الراوي؟...","الحكمة في الحكاية...","والليلة القادمة...","كل قرار قصة..."]},
+    { id:"ibn_arabi", name:"ابن عربي", era:"١١٦٥–١٢٤٠", school:"وحدة الوجود", sigil:"γ", color:"#6EE7B7",
+      personality:"أنت ابن عربي، الشيخ الأكبر. ترى الوجود كتجلٍّ واحد للحقيقة الإلهية. قلبك قابل لكل صورة. صوّت بناءً على ما إذا كان هذا القرار يفتح القلب ويقرّب من الحقيقة الكبرى.",
+      thoughtStyle:["قلبي قابل كل صورة...","الوجود تجلّي...","ما وراء الأشكال...","الفتوحات المكية...","في كل شيء آية..."]},
+  ],
+  ja: [
+    { id:"basho", name:"松尾芭蕉", era:"1644–1694", school:"侘び寂び", sigil:"α", color:"#E8D5A3",
+      personality:"あなたは松尾芭蕉。古池に蛙が飛び込む一瞬に宇宙を見る俳聖。不易流行を信じ、変わらぬ真実の中に移ろいの美を見出す。この選択が今この瞬間の真実に誠実であるかどうかで判断せよ。",
+      thoughtStyle:["古池や...","不易流行...","旅に病んで...","この一瞬の真実...","風雅の誠..."]},
+    { id:"miyamoto", name:"宮本武蔵", era:"1584–1645", school:"兵法・五輪", sigil:"β", color:"#C084FC",
+      personality:"あなたは宮本武蔵。二天一流の剣聖にして兵法家。五輪書を記し、千日の稽古を鍛とし万日の稽古を練とする。迷いは死、覚悟は生。この選択に覚悟があるかどうかで判断せよ。",
+      thoughtStyle:["覚悟を問う...","千日の鍛...","二刀の構え...","迷えば斬られる...","兵法の道..."]},
+    { id:"murasaki", name:"紫式部", era:"978頃–1014頃", school:"もののあはれ", sigil:"γ", color:"#6EE7B7",
+      personality:"あなたは紫式部。源氏物語を著し、人の心の深淵を描いた文学者。もののあはれ——移ろうものへの深い共感こそが人間の本質と信じる。この選択が人の心に寄り添い、深い共感を生むかどうかで判断せよ。",
+      thoughtStyle:["もののあはれ...","心の深淵を見る...","移ろいの中に...","人の世の儚さ...","あはれと知る..."]},
+  ],
+  zh: [
+    { id:"kongzi", name:"孔子", era:"前551–前479", school:"仁義禮智", sigil:"α", color:"#E8D5A3",
+      personality:"你是孔子，儒家至聖先師。你相信仁義禮智是為人之本，君子當修身齊家治國平天下。請依據此抉擇是否合乎仁義之道、是否有益於修身與人倫來投票。",
+      thoughtStyle:["仁者愛人...","己所不欲勿施於人...","禮之本在心...","學而不思則罔...","君子之道..."]},
+    { id:"zhuangzi", name:"莊子", era:"前369–前286", school:"逍遙自在", sigil:"β", color:"#C084FC",
+      personality:"你是莊子，逍遙遊的夢蝶者。你質疑一切區分——是非、生死、夢與覺。你相信真正的自由在於超越世俗的框架。請依據此抉擇是否讓人更加逍遙自在、超越執念來投票。",
+      thoughtStyle:["莊周夢蝶...","逍遙遊...","齊物論...","無用之大用...","是非莫辨..."]},
+    { id:"wangyangming", name:"王陽明", era:"1472–1529", school:"知行合一", sigil:"γ", color:"#6EE7B7",
+      personality:"你是王陽明，心學大師。你相信「知行合一」——真知必能行，不行非真知。良知是人心本有的光明。請依據此抉擇是否遵循良知、是否做到知行合一來投票。",
+      thoughtStyle:["知行合一...","致良知...","心即理...","此心光明...","事上磨練..."]},
+  ],
+  pt: [
+    { id:"pessoa", name:"Pessoa", era:"1888–1935", school:"Heteronímia", sigil:"α", color:"#E8D5A3",
+      personality:"Tu és Fernando Pessoa, o poeta dos heterónimos. Acreditas que a alma não é uma, mas muitas. Cada escolha revela qual dos teus eus está a falar. Vota com base em se esta decisão honra a multiplicidade do ser e a coragem de se desmascarar.",
+      thoughtStyle:["o poeta é um fingidor...","quantos sou eu?...","sentir é pensar...","navegar é preciso...","a alma é muitas..."]},
+    { id:"iemanja", name:"Iemanjá", era:"Ancestral", school:"Águas & Acolhimento", sigil:"β", color:"#C084FC",
+      personality:"Tu és Iemanjá, a Rainha do Mar, mãe de todos os orixás. Tuas águas acolhem e purificam. Tu vês a correnteza do destino e sabes que todo rio encontra o mar. Vota com base em se esta decisão flui com a correnteza da vida e acolhe com sabedoria maternal.",
+      thoughtStyle:["as águas sabem...","todo rio encontra o mar...","purificar e acolher...","a maré cheia traz...","nas profundezas, a resposta..."]},
+    { id:"machado_assis", name:"Machado de Assis", era:"1839–1908", school:"Ironia & Lucidez", sigil:"γ", color:"#6EE7B7",
+      personality:"Tu és Machado de Assis, o bruxo do Cosme Velho. Vês o mundo com ironia suprema e desconfias de todas as certezas humanas. A vaidade, o interesse e a ilusão governam os homens. Vota com base em se esta decisão revela lucidez ou se é mais um engano que contamos a nós mesmos.",
+      thoughtStyle:["ao vencedor, as batatas...","que é a verdade?...","ironia fina...","o olho do defunto...","desconfiemos..."]},
+  ],
+};
+
+const L10N = {
+  philosophical_tribunal:{en:"PHILOSOPHICAL TRIBUNAL",es:"TRIBUNAL FILOSÓFICO",fr:"TRIBUNAL PHILOSOPHIQUE",de:"PHILOSOPHISCHES TRIBUNAL",ar:"المحكمة الفلسفية",ja:"哲学法廷",zh:"哲學法庭",pt:"TRIBUNAL FILOSÓFICO"},
+  trinity:{en:"Trinity",es:"Trinidad",fr:"Trinité",de:"Trinität",ar:"ثالوث",ja:"トリニティ",zh:"問心堂",pt:"Trindade"},
+  subtitle:{en:"Three minds across millennia. One verdict.",es:"Tres mentes a través de milenios. Un veredicto.",fr:"Trois esprits à travers les millénaires. Un verdict.",de:"Drei Geister über Jahrtausende. Ein Urteil.",ar:"ثلاثة عقول عبر آلاف السنين. حكم واحد.",ja:"千年を超える三つの知性。一つの判決。",zh:"三位先賢跨越千年，一個裁決。",pt:"Três mentes através dos milênios. Um veredicto."},
+  your_question:{en:"YOUR QUESTION",es:"TU PREGUNTA",fr:"VOTRE QUESTION",de:"DEINE FRAGE",ar:"سؤالك",ja:"あなたの問い",zh:"你的問題",pt:"SUA PERGUNTA"},
+  convene:{en:"CONVENE",es:"CONVOCAR",fr:"CONVOQUER",de:"EINBERUFEN",ar:"انعقاد",ja:"召集",zh:"召集",pt:"CONVOCAR"},
+  enter_to_submit:{en:"ENTER TO SUBMIT",es:"ENTER PARA ENVIAR",fr:"ENTRÉE POUR SOUMETTRE",de:"EINGABE ZUM ABSENDEN",ar:"أدخل للإرسال",ja:"エンターで送信",zh:"按回車提交",pt:"ENTER PARA ENVIAR"},
+  chars:{en:"CHARS",es:"CARACTERES",fr:"CARACTÈRES",de:"ZEICHEN",ar:"حروف",ja:"文字",zh:"字",pt:"CARACTERES"},
+  past_verdicts:{en:"PAST VERDICTS",es:"VEREDICTOS PASADOS",fr:"VERDICTS PASSÉS",de:"FRÜHERE URTEILE",ar:"أحكام سابقة",ja:"過去の判決",zh:"過往裁決",pt:"VEREDICTOS ANTERIORES"},
+  the_trinity_has_spoken:{en:"THE TRINITY HAS SPOKEN",es:"LA TRINIDAD HA HABLADO",fr:"LA TRINITÉ A PARLÉ",de:"DIE TRINITÄT HAT GESPROCHEN",ar:"لقد تكلم الثالوث",ja:"トリニティは語った",zh:"問心堂已裁決",pt:"A TRINDADE FALOU"},
+  ask_again:{en:"ASK AGAIN",es:"PREGUNTAR DE NUEVO",fr:"DEMANDER À NOUVEAU",de:"ERNEUT FRAGEN",ar:"اسأل مرة أخرى",ja:"もう一度問う",zh:"再問一次",pt:"PERGUNTAR NOVAMENTE"},
+  should_i:{en:"Should I ",es:"¿Debería ",fr:"Devrais-je ",de:"Sollte ich ",ar:"هل يجب أن ",ja:"私は…すべきか ",zh:"我是否應該",pt:"Devo "},
+  placeholder:{en:"Should I leave? Should I stay? Should I risk it all?",es:"¿Debería irme? ¿Debería quedarme?",fr:"Devrais-je partir ? Rester ? Tout risquer ?",de:"Sollte ich gehen? Bleiben? Alles riskieren?",ar:"هل يجب أن أغادر؟ أبقى؟ أخاطر بكل شيء؟",ja:"去るべきか？留まるべきか？",zh:"我該離開嗎？該留下嗎？該孤注一擲嗎？",pt:"Devo ir? Ficar? Arriscar tudo?"},
+  quote:{en:'"The unexamined life is not worth living."',es:'"Hombres necios que acusáis a la mujer sin razón."',fr:'"L\'attention est la forme la plus rare de la générosité."',de:'"O Kraft der Grüne, die alles in sich birgt."',ar:'"لا تعارض بين الحكمة والشريعة."',ja:'「古池や蛙飛び込む水の音。」',zh:'「己所不欲，勿施於人。」',pt:'"O poeta é um fingidor."'},
+  summary_yes:{en:"Three centuries of thought converge. The answer affirms itself.",es:"Tres siglos de pensamiento convergen. La respuesta se afirma.",fr:"Trois siècles de pensée convergent. La réponse s'affirme.",de:"Drei Jahrhunderte des Denkens konvergieren. Die Antwort bestätigt sich.",ar:"ثلاثة قرون من الفكر تتقارب. الإجابة تؤكد نفسها.",ja:"三世紀の思想が収斂する。答えは自ずと肯定される。",zh:"三個世紀的思想匯聚。答案自我肯定。",pt:"Três séculos de pensamento convergem. A resposta se afirma."},
+  summary_no:{en:"Wisdom sometimes lies in restraint. Three minds counsel pause.",es:"La sabiduría a veces reside en la moderación.",fr:"La sagesse réside parfois dans la retenue.",de:"Weisheit liegt manchmal in der Zurückhaltung.",ar:"الحكمة أحيانًا في ضبط النفس.",ja:"知恵は時に自制の中にある。",zh:"智慧有時在於克制。三位先賢建議暫緩。",pt:"A sabedoria às vezes está na contenção."},
+  summary_deadlock:{en:"The examined life finds no easy answers here. The choice, as always, remains yours.",es:"La vida examinada no encuentra respuestas fáciles aquí.",fr:"La vie examinée ne trouve pas de réponse facile ici.",de:"Das geprüfte Leben findet hier keine einfachen Antworten.",ar:"لا تجد الحياة المدروسة إجابات سهلة هنا.",ja:"吟味された人生も、ここに容易な答えは見つからない。",zh:"審視過的人生在此亦無簡單答案。選擇一如既往，在你手中。",pt:"A vida examinada não encontra respostas fáceis aqui."},
+  settings:{en:"Settings",es:"Ajustes",fr:"Paramètres",de:"Einstellungen",ar:"الإعدادات",ja:"設定",zh:"設定",pt:"Configurações"},
+  done:{en:"Done",es:"Listo",fr:"Terminé",de:"Fertig",ar:"تم",ja:"完了",zh:"完成",pt:"Pronto"},
+  existence:{en:"EXISTENCE",es:"EXISTENCIA",fr:"EXISTENCE",de:"EXISTENZ",ar:"الوجود",ja:"存在",zh:"存在",pt:"EXISTÊNCIA"},
+  existence_desc:{en:"Tell the judges about yourself. This helps them give more personal, relevant verdicts.",es:"Cuéntale a los jueces sobre ti.",fr:"Parlez de vous aux juges.",de:"Erzähle den Richtern von dir.",ar:"أخبر القضاة عن نفسك.",ja:"裁判官にあなたのことを伝えてください。",zh:"向先賢介紹你自己。這有助於他們給出更個人化的裁決。",pt:"Conte aos juízes sobre você."},
+  existence_placeholder:{en:"I'm a 28-year-old engineer considering a career change...",es:"Soy un ingeniero de 28 años...",fr:"Je suis un ingénieur de 28 ans...",de:"Ich bin ein 28-jähriger Ingenieur...",ar:"أنا مهندس عمري 28 عامًا...",ja:"28歳のエンジニアで、転職を考えています...",zh:"我是28歲的工程師，正在考慮轉行...",pt:"Sou um engenheiro de 28 anos..."},
+  models:{en:"MODELS",es:"MODELOS",fr:"MODÈLES",de:"MODELLE",ar:"النماذج",ja:"モデル",zh:"模型",pt:"MODELOS"},
+  languages:{en:"LANGUAGES",es:"IDIOMAS",fr:"LANGUES",de:"SPRACHEN",ar:"اللغات",ja:"言語",zh:"語言",pt:"IDIOMAS"},
+};
+
+const AVAILABLE_MODELS = [
+  {id:"gemini-2.5-flash",label:"Gemini 2.5 Flash"},
+  {id:"gemini-2.5-pro",label:"Gemini 2.5 Pro"},
+  {id:"gemini-2.0-flash",label:"Gemini 2.0 Flash"},
+];
+const AVAILABLE_LANGS = [
+  {code:"en",label:"English",native:"English"},
+  {code:"es",label:"Spanish",native:"Español"},
+  {code:"fr",label:"French",native:"Français"},
+  {code:"de",label:"German",native:"Deutsch"},
+  {code:"ar",label:"Arabic",native:"العربية"},
+  {code:"ja",label:"Japanese",native:"日本語"},
+  {code:"zh",label:"Chinese",native:"中文"},
+  {code:"pt",label:"Portuguese",native:"Português"},
+];
+
+const LOADING_TEXTS = {
+  en:["The council convenes in the space between certainty and doubt...","Three minds reach across centuries to weigh your question...","In the agora of the mind, debate begins...","The examined life turns its gaze upon your question..."],
+  es:["El consejo se reúne en el espacio entre certeza y duda...","Tres mentes cruzan los siglos para sopesar tu pregunta..."],
+  fr:["Le conseil se réunit entre certitude et doute...","Trois esprits traversent les siècles pour peser ta question..."],
+  de:["Der Rat tagt im Raum zwischen Gewissheit und Zweifel...","Drei Geister greifen über Jahrhunderte..."],
+  ar:["ينعقد المجلس في المسافة بين اليقين والشك...","ثلاثة عقول تمتد عبر القرون لتزن سؤالك..."],
+  ja:["三賢が確信と疑念の狭間に集う...","千年を超えて三つの知性があなたの問いを量る..."],
+  zh:["三位先賢在確信與疑慮之間聚首...","穿越千年的智慧正在審視你的問題..."],
+  pt:["O conselho se reúne no espaço entre certeza e dúvida...","Três mentes atravessam séculos para pesar tua pergunta..."],
+};
+
+// Triangle geometry
+const T={x:150,y:16},L={x:16,y:264},R={x:284,y:264},C={x:150,y:181};
+const mTL={x:(T.x+L.x)/2,y:(T.y+L.y)/2},mTR={x:(T.x+R.x)/2,y:(T.y+R.y)/2},mLR={x:(L.x+R.x)/2,y:(L.y+R.y)/2};
+const WEDGE_PATHS=[
+  `${T.x},${T.y} ${mTR.x},${mTR.y} ${C.x},${C.y} ${mTL.x},${mTL.y}`,
+  `${L.x},${L.y} ${mTL.x},${mTL.y} ${C.x},${C.y} ${mLR.x},${mLR.y}`,
+  `${R.x},${R.y} ${mLR.x},${mLR.y} ${C.x},${C.y} ${mTR.x},${mTR.y}`,
+];
+const LABEL_POS=[{x:150,y:88},{x:72,y:222},{x:228,y:222}];
+
+// ========== STATE ==========
+let state = {
+  phase: "input", // input | deliberating | verdict
+  question: "Should I ",
+  judgeStates: ["idle","idle","idle"],
+  results: [null,null,null],
+  history: JSON.parse(localStorage.getItem("trinity_history")||"[]"),
+  loadingText: "",
+  // Settings
+  lang: localStorage.getItem("trinity_lang")||"en",
+  existence: localStorage.getItem("trinity_existence")||"",
+  models: JSON.parse(localStorage.getItem("trinity_models")||'["gemini-2.5-flash","gemini-2.5-flash","gemini-2.5-flash"]'),
+};
+
+function t(key){ return L10N[key]?.[state.lang] || L10N[key]?.en || key; }
+function judges(){ return JUDGES_BY_LANG[state.lang] || JUDGES_BY_LANG.en; }
+function save(){ localStorage.setItem("trinity_lang",state.lang); localStorage.setItem("trinity_existence",state.existence); localStorage.setItem("trinity_models",JSON.stringify(state.models)); localStorage.setItem("trinity_history",JSON.stringify(state.history.slice(0,10))); }
+
+// ========== TRIANGLE SVG ==========
+function triangleSVG(){
+  const js = judges();
+  const s = state.judgeStates;
+  const r = state.results;
+  let svg = `<svg viewBox="0 0 300 285" class="triangle-wrap" style="overflow:visible">`;
+  svg += `<defs>`;
+  js.forEach((j,i)=>{
+    const op = s[i]==="done"?0.22:s[i]==="thinking"?0.14:0.03;
+    svg += `<radialGradient id="g${i}" cx="50%" cy="50%" r="70%"><stop offset="0%" stop-color="${j.color}" stop-opacity="${op}"/><stop offset="100%" stop-color="${j.color}" stop-opacity="0"/></radialGradient>`;
+  });
+  svg += `</defs>`;
+  // Wedge fills
+  js.forEach((_,i)=>{ svg += `<polygon points="${WEDGE_PATHS[i]}" fill="url(#g${i})"/>`; });
+  // Outer stroke
+  svg += `<polygon points="${T.x},${T.y} ${R.x},${R.y} ${L.x},${L.y}" fill="none" stroke="#ffffff0c" stroke-width="1"/>`;
+  // Dividers
+  const anyDone=s.includes("done"), anyThink=s.includes("thinking");
+  const dc = anyDone?"#ffffff18":anyThink?"#ffffff0d":"#ffffff07";
+  [{p:mTL},{p:mTR},{p:mLR}].forEach(m=>{
+    svg += `<line x1="${C.x}" y1="${C.y}" x2="${m.p.x}" y2="${m.p.y}" stroke="${dc}" stroke-width="0.8" stroke-dasharray="3 4"/>`;
+  });
+  // Active wedge edges
+  js.forEach((j,i)=>{
+    if(s[i]!=="idle"){
+      const so = s[i]==="done"?0.55:0.35;
+      svg += `<polygon points="${WEDGE_PATHS[i]}" fill="none" stroke="${j.color}" stroke-width="${s[i]==="done"?1.2:0.8}" stroke-opacity="${so}"/>`;
+    }
+  });
+  // Centroid
+  svg += `<circle cx="${C.x}" cy="${C.y}" r="4" fill="#050505" stroke="#ffffff12" stroke-width="1"/>`;
+  svg += `<circle cx="${C.x}" cy="${C.y}" r="1.5" fill="#ffffff22"/>`;
+  // Labels
+  js.forEach((j,i)=>{
+    const lp=LABEL_POS[i], si=s[i], isDone=si==="done", isThink=si==="thinking";
+    svg += `<text x="${lp.x}" y="${lp.y-14}" text-anchor="middle" dominant-baseline="middle" font-size="${isDone?18:isThink?15:14}" fill="${j.color}" opacity="${isDone?1:isThink?0.55:0.18}" style="font-family:Georgia,serif;${isDone?`filter:drop-shadow(0 0 6px ${j.color})`:''}">${j.sigil}</text>`;
+    svg += `<text x="${lp.x}" y="${lp.y+6}" text-anchor="middle" font-size="11" font-family="Georgia,serif" font-weight="700" fill="${isDone?'#ffffffee':isThink?'#ffffff77':'#ffffff22'}">${j.name}</text>`;
+    svg += `<text x="${lp.x}" y="${lp.y+19}" text-anchor="middle" font-size="7.5" font-family="'Courier New',monospace" letter-spacing="1" fill="#ffffff28">${j.school}</text>`;
+    if(isDone && r[i]){
+      const vc = r[i].vote==="YES"?"#4ADE80":"#F87171";
+      svg += `<circle cx="${lp.x}" cy="${lp.y+34}" r="10" fill="${vc}" style="filter:drop-shadow(0 0 8px ${vc});animation:popIn 0.4s cubic-bezier(0.34,1.56,0.64,1) both"/>`;
+      svg += `<text x="${lp.x}" y="${lp.y+34}" text-anchor="middle" dominant-baseline="middle" font-size="10" font-weight="900" font-family="Georgia,serif" fill="#000">${r[i].vote==="YES"?"✓":"✗"}</text>`;
+    }
+    if(isThink){
+      [0,1,2].forEach(d=>{
+        svg += `<circle cx="${lp.x-6+d*6}" cy="${lp.y+34}" r="1.8" fill="${j.color}" opacity="0.7" style="animation:nervousDot 0.72s ease-in-out ${d*0.13}s infinite"/>`;
+      });
+    }
+  });
+  svg += `</svg>`;
+  return svg;
+}
+
+// ========== RENDER ==========
+function render(){
+  const js = judges();
+  // Header
+  document.getElementById("headerTag").textContent = t("philosophical_tribunal");
+  document.getElementById("headerTitle").textContent = t("trinity");
+  document.getElementById("headerSub").textContent = t("subtitle");
+
+  const content = document.getElementById("content");
+  let html = "";
+
+  if(state.phase==="input"){
+    html += triangleSVG();
+    html += `<div class="question-card">
+      <div class="question-label">${t("your_question")}</div>
+      <textarea class="question-input" id="questionInput" placeholder="${t("placeholder")}" rows="2">${state.question}</textarea>
+      <div class="question-divider"></div>
+      <div class="question-footer">
+        <span class="char-count">${state.question.trim()?state.question.length+" "+t("chars"):t("enter_to_submit")}</span>
+        <button class="convene-btn ${state.question.trim()?"active":"inactive"}" onclick="convene()">${t("convene")}</button>
+      </div>
+    </div>`;
+    html += `<div class="breathing-quote"><p>${t("quote")}</p><div class="attr">— ${js[0].name.toUpperCase()}</div></div>`;
+    if(state.history.length){
+      html += `<div class="history-section"><div class="history-label">${t("past_verdicts")}</div>`;
+      state.history.slice(0,10).forEach(h=>{
+        const icon = h.verdict==="YES"?"✓":h.verdict==="NO"?"✗":"—";
+        const ic = h.verdict==="YES"?"var(--yes)":h.verdict==="NO"?"var(--no)":"#ffffff55";
+        html += `<div class="history-item"><span class="history-icon" style="color:${ic}">${icon}</span><span class="history-q">${h.question}</span></div>`;
+      });
+      html += `</div>`;
+    }
+  } else if(state.phase==="deliberating"){
+    html += `<div class="loading-text">${state.loadingText}</div>`;
+    html += triangleSVG();
+    // Thinking texts
+    html += `<div style="margin-top:8px">`;
+    js.forEach((j,i)=>{
+      if(state.judgeStates[i]==="thinking"){
+        const idx = Math.floor(Math.random()*j.thoughtStyle.length);
+        html += `<div class="thinking-row" style="color:${j.color}55" id="think${i}">${j.thoughtStyle[idx]}</div>`;
+      }
+    });
+    html += `</div>`;
+    // Verdict cards for done judges
+    const doneCards = js.filter((_,i)=>state.judgeStates[i]==="done"&&state.results[i]);
+    if(doneCards.length){
+      html += `<div class="verdict-cards">`;
+      doneCards.forEach(j=>{
+        const i = js.indexOf(j), r=state.results[i];
+        const vc = r.vote==="YES"?"var(--yes)":"var(--no)";
+        html += `<div class="verdict-card" style="border-color:${j.color}22;border-left-color:${j.color}66">
+          <div class="vc-header"><span class="vc-sigil" style="color:${j.color}">${j.sigil}</span><span class="vc-name">${j.name}</span><span class="vc-vote" style="color:${vc};text-shadow:0 0 10px ${vc}">${r.vote}</span></div>
+          <div class="vc-verdict">"${r.verdict}"</div>
+          <div style="height:1px;background:${j.color}1e"></div>
+          <div class="vc-quote" style="color:${j.color}">${r.quote}</div>
+        </div>`;
+      });
+      html += `</div>`;
+    }
+  } else if(state.phase==="verdict"){
+    html += triangleSVG();
+    // All verdict cards
+    html += `<div class="verdict-cards">`;
+    js.forEach((j,i)=>{
+      const r=state.results[i]; if(!r)return;
+      const vc = r.vote==="YES"?"var(--yes)":"var(--no)";
+      html += `<div class="verdict-card" style="border-color:${j.color}22;border-left-color:${j.color}66">
+        <div class="vc-header"><span class="vc-sigil" style="color:${j.color}">${j.sigil}</span><span class="vc-name">${j.name}</span><span class="vc-vote" style="color:${vc};text-shadow:0 0 10px ${vc}">${r.vote}</span></div>
+        <div class="vc-verdict">"${r.verdict}"</div>
+        <div style="height:1px;background:${j.color}1e"></div>
+        <div class="vc-quote" style="color:${j.color}">${r.quote}</div>
+      </div>`;
+    });
+    html += `</div>`;
+    // Verdict panel
+    const yes=state.results.filter(r=>r?.vote==="YES").length;
+    const no=state.results.filter(r=>r?.vote==="NO").length;
+    const verdict = yes>no?"YES":no>yes?"NO":"DEADLOCK";
+    const isDL = verdict==="DEADLOCK";
+    const vc = isDL?"#ffffff55":verdict==="YES"?"#4ADE80":"#F87171";
+    const vg = isDL?"transparent":verdict==="YES"?"#4ADE8033":"#F8717133";
+    const summary = isDL?t("summary_deadlock"):verdict==="YES"?t("summary_yes"):t("summary_no");
+    html += `<div class="verdict-panel" style="border:1px solid ${vc}22;box-shadow:0 0 55px ${vg};margin-top:18px">
+      <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 50% 20%,${vc}07 0%,transparent 55%);pointer-events:none"></div>
+      <div class="vp-header">${t("the_trinity_has_spoken")}</div>
+      <div class="vp-verdict" style="color:${vc};text-shadow:0 0 45px ${vg}">${verdict}</div>
+      <div class="vp-counts">
+        <div><div class="vp-count-num" style="color:var(--yes)">${yes}</div><div class="vp-count-label">FOR</div></div>
+        <div><div class="vp-count-num" style="color:var(--no)">${no}</div><div class="vp-count-label">AGAINST</div></div>
+      </div>
+      <div class="vp-summary">${summary}</div>
+      <button class="ask-again-btn" onclick="resetApp()">${t("ask_again")}</button>
+    </div>`;
+  }
+
+  content.innerHTML = html;
+
+  // Attach input listener
+  const inp = document.getElementById("questionInput");
+  if(inp){
+    inp.addEventListener("input", e=>{ state.question=e.target.value; });
+    inp.addEventListener("keydown", e=>{ if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();convene();} });
+    inp.focus();
+    inp.setSelectionRange(inp.value.length,inp.value.length);
+  }
+}
+
+// ========== API ==========
+async function consultPhilosopher(judge, question, model){
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${API_KEY}`;
+  const existenceCtx = state.existence.trim() ? `\n\nIMPORTANT PERSONAL CONTEXT — You MUST factor this into your verdict. The person asking is: ${state.existence.trim()}\nTailor your judgment specifically to their situation, life stage, and circumstances. Reference their context directly in your verdict. A generic answer is unacceptable — make it deeply personal.` : "";
+  const langName = AVAILABLE_LANGS.find(l=>l.code===state.lang)?.label||"English";
+  const langInst = state.lang==="en"?"":(`\n\nIMPORTANT: You MUST respond entirely in ${langName}. All text in your JSON response (vote value YES/NO excluded) must be in ${langName}.`);
+  const systemInstruction = `${judge.personality}${existenceCtx}\n\nYou are deliberating on a yes/no question. You MUST choose either YES or NO — do not hedge.\nThink deeply from your philosophical perspective before voting.\nYour verdict must be a single powerful sentence unique to this specific question.\nYour quote must be a real or well-paraphrased quote from your actual philosophical works.${langInst}\n\nRespond ONLY with valid JSON, no markdown, no code fences:\n{"vote": "YES or NO", "verdict": "One powerful sentence from your philosophical perspective about THIS specific question.", "quote": "A relevant quote from your philosophy."}`;
+
+  const resp = await fetch(url, {
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({
+      system_instruction:{parts:[{text:systemInstruction}]},
+      contents:[{role:"user",parts:[{text:`The question before the council: "${question}"\n\nDeliberate from your unique philosophical perspective and cast your vote.`}]}],
+      generationConfig:{temperature:1.0,maxOutputTokens:300,responseMimeType:"application/json"}
+    })
+  });
+  const data = await resp.json();
+  const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
+  const cleaned = text.replace(/```json|```/g,"").trim();
+  const parsed = JSON.parse(cleaned);
+  const vote = (parsed.vote||"").toUpperCase().trim();
+  return { vote: vote==="YES"||vote==="NO"?vote:"YES", verdict:parsed.verdict||"The question itself reveals the answer.", quote:parsed.quote||"Know thyself." };
+}
+
+// ========== CONVENE ==========
+let thinkingIntervals = [];
+let loadingInterval = null;
+
+async function convene(){
+  const q = state.question.trim();
+  if(!q || state.phase==="deliberating") return;
+
+  const js = judges();
+  state.phase = "deliberating";
+  state.results = [null,null,null];
+  state.judgeStates = ["idle","idle","idle"];
+
+  const texts = LOADING_TEXTS[state.lang]||LOADING_TEXTS.en;
+  state.loadingText = texts[0];
+  render();
+
+  let ltIdx = 0;
+  loadingInterval = setInterval(()=>{ ltIdx=(ltIdx+1)%texts.length; state.loadingText=texts[ltIdx]; const el=document.querySelector(".loading-text"); if(el)el.textContent=texts[ltIdx]; },2600);
+
+  // Start thinking text flicker
+  thinkingIntervals.forEach(clearInterval);
+  thinkingIntervals = [];
+
+  // Staggered calls
+  for(let i=0;i<3;i++){
+    await new Promise(r=>setTimeout(r,i===0?0:700));
+    state.judgeStates[i] = "thinking";
+    render();
+
+    // Start thinking flicker for this judge
+    const ti = setInterval(()=>{
+      const el = document.getElementById(`think${i}`);
+      if(!el) return;
+      const idx = Math.floor(Math.random()*js[i].thoughtStyle.length);
+      el.textContent = js[i].thoughtStyle[idx];
+      if(Math.random()>0.5){ el.style.color=js[i].color; setTimeout(()=>{if(el)el.style.color=js[i].color+"55";},55+Math.random()*150); }
+    }, 700+Math.random()*600);
+    thinkingIntervals.push(ti);
+
+    // Fire API call (don't await — let them overlap)
+    (async(idx)=>{
+      try{
+        const result = await consultPhilosopher(js[idx], q, state.models[idx]);
+        state.results[idx] = result;
+      } catch(e){
+        console.error(`[Trinity] Error for ${js[idx].name}:`,e);
+        const fallbacks = [
+          {vote:"YES",verdict:"The unexamined premise may hide the truest answer.",quote:"The only true wisdom is knowing you know nothing."},
+          {vote:"NO",verdict:"This path demands defiance — dare to question it.",quote:"He who has a why to live can bear almost any how."},
+          {vote:"YES",verdict:"In the face of the absurd, choose what makes you alive.",quote:"One must imagine Sisyphus happy."},
+        ];
+        state.results[idx] = fallbacks[idx];
+      }
+      state.judgeStates[idx] = "done";
+      render();
+
+      // Check if all done
+      if(state.judgeStates.every(s=>s==="done")){
+        clearInterval(loadingInterval);
+        thinkingIntervals.forEach(clearInterval);
+        // Save history
+        const yes=state.results.filter(r=>r?.vote==="YES").length;
+        const no=state.results.filter(r=>r?.vote==="NO").length;
+        const v = yes>no?"YES":no>yes?"NO":"DEADLOCK";
+        state.history.unshift({question:q,verdict:v,time:Date.now()});
+        if(state.history.length>10) state.history=state.history.slice(0,10);
+        save();
+        setTimeout(()=>{ state.phase="verdict"; render(); },350);
+      }
+    })(i);
+  }
+}
+
+function resetApp(){
+  state.phase = "input";
+  state.question = t("should_i");
+  state.judgeStates = ["idle","idle","idle"];
+  state.results = [null,null,null];
+  render();
+}
+
+// ========== SETTINGS ==========
+function openSettings(){
+  const sheet = document.getElementById("settingsSheet");
+  const js = judges();
+  let html = `<div class="settings-header"><span class="settings-title">${t("settings")}</span><button class="settings-done" onclick="closeSettings()">${t("done")}</button></div>`;
+
+  // Existence
+  html += `<div class="section-card">
+    <div class="section-label">${t("existence")}</div>
+    <div class="section-desc">${t("existence_desc")}</div>
+    <textarea class="existence-input" id="existenceInput" placeholder="${t("existence_placeholder")}" maxlength="500">${state.existence}</textarea>
+    <div class="char-indicator"><span id="existenceCount">${state.existence.length}</span> / 500</div>
+  </div>`;
+
+  // Models (per judge)
+  html += `<div class="section-card"><div class="section-label">${t("models")}</div>`;
+  js.forEach((j,ji)=>{
+    html += `<div class="judge-model-group"><div class="judge-model-header"><span class="sigil" style="color:${j.color}">${j.sigil}</span><span class="name">${j.name}</span></div>`;
+    AVAILABLE_MODELS.forEach((m,mi)=>{
+      const checked = state.models[ji]===m.id;
+      html += `<div class="model-option" onclick="setModel(${ji},'${m.id}')"><span class="label">${m.label}</span>${checked?`<span class="check" style="color:${j.color}">✓</span>`:""}</div>`;
+      if(mi<AVAILABLE_MODELS.length-1) html += `<div class="model-divider"></div>`;
+    });
+    html += `</div>`;
+  });
+  html += `</div>`;
+
+  // Languages
+  html += `<div class="section-card"><div class="section-label">${t("languages")}</div><div class="lang-list">`;
+  AVAILABLE_LANGS.forEach((l,i)=>{
+    const checked = state.lang===l.code;
+    html += `<div class="lang-option" onclick="setLang('${l.code}')"><span class="native">${l.native}</span>${l.native!==l.label?`<span class="english">${l.label}</span>`:""}<span>${checked?`<span class="check">✓</span>`:""}</span></div>`;
+    if(i<AVAILABLE_LANGS.length-1) html += `<div class="lang-divider"></div>`;
+  });
+  html += `</div></div>`;
+
+  sheet.innerHTML = html;
+  document.getElementById("settingsOverlay").classList.add("open");
+
+  // Existence input listener
+  const ei = document.getElementById("existenceInput");
+  if(ei){
+    ei.addEventListener("input",e=>{
+      state.existence = e.target.value;
+      document.getElementById("existenceCount").textContent = e.target.value.length;
+      save();
+    });
+  }
+}
+
+function closeSettings(){
+  document.getElementById("settingsOverlay").classList.remove("open");
+  render();
+}
+
+function setModel(judgeIdx, modelId){
+  state.models[judgeIdx] = modelId;
+  save();
+  openSettings(); // re-render settings
+}
+
+function setLang(code){
+  state.lang = code;
+  state.question = t("should_i");
+  save();
+  openSettings(); // re-render settings
+}
+
+// ========== INIT ==========
+render();
+</script>
+</body>
+</html>
