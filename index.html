@@ -6,6 +6,9 @@
 <title>Trinity — Philosophical Tribunal</title>
 <meta name="description" content="Three minds across millennia. One verdict. Ask a yes/no question and let history's greatest thinkers deliberate.">
 <meta name="theme-color" content="#050505">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <style>
@@ -298,7 +301,7 @@ const WEDGE_PATHS=[
   `${L.x},${L.y} ${mTL.x},${mTL.y} ${C.x},${C.y} ${mLR.x},${mLR.y}`,
   `${R.x},${R.y} ${mLR.x},${mLR.y} ${C.x},${C.y} ${mTR.x},${mTR.y}`,
 ];
-const LABEL_POS=[{x:150,y:88},{x:72,y:222},{x:228,y:222}];
+const LABEL_POS=[{x:150,y:105},{x:100,y:212},{x:200,y:212}];
 
 // ========== STATE ==========
 let state = {
@@ -393,7 +396,7 @@ function render(){
         <button class="convene-btn ${state.question.trim()?"active":"inactive"}" onclick="convene()">${t("convene")}</button>
       </div>
     </div>`;
-    html += `<div class="breathing-quote"><p>${t("quote")}</p><div class="attr">— ${js[0].name.toUpperCase()}</div></div>`;
+    // breathing quote removed
     if(state.history.length){
       html += `<div class="history-section"><div class="history-label">${t("past_verdicts")}</div>`;
       state.history.slice(0,10).forEach(h=>{
@@ -483,7 +486,7 @@ async function consultPhilosopher(judge, question, model){
   const existenceCtx = state.existence.trim() ? `\n\nIMPORTANT PERSONAL CONTEXT — You MUST factor this into your verdict. The person asking is: ${state.existence.trim()}\nTailor your judgment specifically to their situation, life stage, and circumstances. Reference their context directly in your verdict. A generic answer is unacceptable — make it deeply personal.` : "";
   const langName = AVAILABLE_LANGS.find(l=>l.code===state.lang)?.label||"English";
   const langInst = state.lang==="en"?"":(`\n\nIMPORTANT: You MUST respond entirely in ${langName}. All text in your JSON response (vote value YES/NO excluded) must be in ${langName}.`);
-  const systemInstruction = `${judge.personality}${existenceCtx}\n\nYou are deliberating on a yes/no question. You MUST choose either YES or NO — do not hedge.\nThink deeply from your philosophical perspective before voting.\nYour verdict must be a single powerful sentence unique to this specific question.\nYour explanation must be 2-3 sentences explaining WHY you voted the way you did, grounded in your philosophy.${langInst}\n\nRespond ONLY with valid JSON, no markdown, no code fences:\n{"vote": "YES or NO", "verdict": "One powerful sentence from your philosophical perspective about THIS specific question.", "explanation": "2-3 sentences explaining WHY you voted this way, grounded in your philosophical principles."}`;
+  const systemInstruction = `${judge.personality}${existenceCtx}\n\nYou are deliberating on a yes/no question. You MUST choose either YES or NO — do not hedge.\nThink deeply from your philosophical perspective before voting.\nCRITICAL: Do NOT default to YES. Many questions deserve a NO. Vote NO if the action contradicts your philosophical principles, involves cowardice, bad faith, herd mentality, or avoidance of truth. Be genuinely critical and contrarian when your philosophy demands it. A tribunal where everyone agrees is worthless.\nYour verdict must be a single powerful sentence unique to this specific question.\nYour explanation must be 2-3 sentences explaining WHY you voted the way you did, grounded in your philosophy.${langInst}\n\nRespond ONLY with valid JSON, no markdown, no code fences:\n{"vote": "YES or NO", "verdict": "One powerful sentence from your philosophical perspective about THIS specific question.", "explanation": "2-3 sentences explaining WHY you voted this way, grounded in your philosophical principles."}`;
 
   const resp = await fetch(url, {
     method:"POST",
