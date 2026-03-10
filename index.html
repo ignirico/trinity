@@ -303,6 +303,17 @@ const WEDGE_PATHS=[
 ];
 const LABEL_POS=[{x:150,y:105},{x:100,y:212},{x:200,y:212}];
 
+let DEBATE_TEXTS = {
+  en:["α challenges β's premise...","γ pushes back on α's reasoning...","β and γ argue with rising intensity...","α probes for the weakness...","a brief moment of convergence...","γ rejects the easy consensus...","β exposes a contradiction...","the tension between α and γ builds..."],
+  es:["α cuestiona la premisa de β...","γ desafía la postura de α...","β y γ debaten con fervor...","α busca el punto débil...","los tres convergen brevemente...","γ rechaza el consenso fácil..."],
+  fr:["α remet en question la position de β...","γ défie le raisonnement de α...","β et γ débattent avec passion...","α cherche la faille..."],
+  de:["α hinterfragt die Position von β...","γ fordert α's Argumentation heraus...","β und γ debattieren leidenschaftlich..."],
+  ar:["α يشكك في موقف β...","γ يتحدى منطق α...","β و γ يتناظران بحماس..."],
+  ja:["αがβの前提を問う...","γがαの論理に異を唱える...","βとγが激しく議論する..."],
+  zh:["α質疑β的立場...","γ挑戰α的推理...","β與γ激烈辯論..."],
+  pt:["α questiona a posição de β...","γ desafia o raciocínio de α...","β e γ debatem com paixão..."],
+};
+
 // ========== STATE ==========
 let state = {
   phase: "input", // input | deliberating | verdict
@@ -315,6 +326,8 @@ let state = {
   lang: localStorage.getItem("trinity_lang")||"en",
   existence: localStorage.getItem("trinity_existence")||"",
   models: JSON.parse(localStorage.getItem("trinity_models")||'["gemini-2.5-flash","gemini-2.5-flash","gemini-2.5-flash"]'),
+  debateMessage: "",
+  debateInterval: null,
 };
 
 function t(key){ return L10N[key]?.[state.lang] || L10N[key]?.en || key; }
@@ -418,6 +431,12 @@ function render(){
       }
     });
     html += `</div>`;
+    if(state.debateMessage){
+      html += `<div style="display:flex;align-items:center;gap:6px;padding:8px 12px;margin-top:10px;background:#ffffff08;border-radius:8px;border:0.5px solid #ffffff10">
+        <div style="width:5px;height:5px;border-radius:50%;background:#C084FC;animation:breathe 0.8s ease-in-out infinite"></div>
+        <span style="font-size:9px;font-family:'Courier New',monospace;letter-spacing:0.3px;color:#ffffff66">${state.debateMessage}</span>
+      </div>`;
+    }
     // Verdict cards for done judges
     const doneCards = js.filter((_,i)=>state.judgeStates[i]==="done"&&state.results[i]);
     if(doneCards.length){
@@ -454,7 +473,6 @@ function render(){
     const isDL = verdict==="DEADLOCK";
     const vc = isDL?"#ffffff55":verdict==="YES"?"#4ADE80":"#F87171";
     const vg = isDL?"transparent":verdict==="YES"?"#4ADE8033":"#F8717133";
-    const summary = isDL?t("summary_deadlock"):verdict==="YES"?t("summary_yes"):t("summary_no");
     html += `<div class="verdict-panel" style="border:1px solid ${vc}22;box-shadow:0 0 55px ${vg};margin-top:18px">
       <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 50% 20%,${vc}07 0%,transparent 55%);pointer-events:none"></div>
       <div class="vp-header">${t("the_trinity_has_spoken")}</div>
@@ -463,7 +481,6 @@ function render(){
         <div><div class="vp-count-num" style="color:var(--yes)">${yes}</div><div class="vp-count-label">FOR</div></div>
         <div><div class="vp-count-num" style="color:var(--no)">${no}</div><div class="vp-count-label">AGAINST</div></div>
       </div>
-      <div class="vp-summary">${summary}</div>
       <button class="ask-again-btn" onclick="resetApp()">${t("ask_again")}</button>
     </div>`;
   }
@@ -486,7 +503,7 @@ async function consultPhilosopher(judge, question, model){
   const existenceCtx = state.existence.trim() ? `\n\nIMPORTANT PERSONAL CONTEXT — You MUST factor this into your verdict. The person asking is: ${state.existence.trim()}\nTailor your judgment specifically to their situation, life stage, and circumstances. Reference their context directly in your verdict. A generic answer is unacceptable — make it deeply personal.` : "";
   const langName = AVAILABLE_LANGS.find(l=>l.code===state.lang)?.label||"English";
   const langInst = state.lang==="en"?"":(`\n\nIMPORTANT: You MUST respond entirely in ${langName}. All text in your JSON response (vote value YES/NO excluded) must be in ${langName}.`);
-  const systemInstruction = `${judge.personality}${existenceCtx}\n\nYou are deliberating on a yes/no question. You MUST choose either YES or NO — do not hedge.\nThink deeply from your philosophical perspective before voting.\nCRITICAL: Do NOT default to YES. Many questions deserve a NO. Vote NO if the action contradicts your philosophical principles, involves cowardice, bad faith, herd mentality, or avoidance of truth. Be genuinely critical and contrarian when your philosophy demands it. A tribunal where everyone agrees is worthless.\nYour verdict must be a single powerful sentence unique to this specific question.\nYour explanation must be 2-3 sentences explaining WHY you voted the way you did, grounded in your philosophy.${langInst}\n\nRespond ONLY with valid JSON, no markdown, no code fences:\n{"vote": "YES or NO", "verdict": "One powerful sentence from your philosophical perspective about THIS specific question.", "explanation": "2-3 sentences explaining WHY you voted this way, grounded in your philosophical principles."}`;
+  const systemInstruction = `${judge.personality}${existenceCtx}\n\nYou are deliberating on a yes/no question. You MUST choose either YES or NO — do not hedge.\nThink deeply from your philosophical perspective before voting.\nCRITICAL: Do NOT default to YES. Many questions deserve a NO. Vote NO when the action contradicts your principles, enables cowardice, bad faith, herd mentality, avoidance of truth, recklessness, or self-deception. Be genuinely critical — a tribunal where everyone agrees is worthless. At least one judge should usually dissent.\nIMPORTANT: The "vote" field MUST be exactly the English word "YES" or "NO" regardless of what language you write the verdict and explanation in.\nYour verdict must be a single powerful sentence unique to this specific question.\nYour explanation must be 2-3 sentences explaining WHY you voted the way you did, grounded in your philosophy.${langInst}\n\nRespond ONLY with valid JSON, no markdown, no code fences:\n{"vote": "YES or NO", "verdict": "One powerful sentence from your philosophical perspective about THIS specific question.", "explanation": "2-3 sentences explaining WHY you voted this way, grounded in your philosophical principles."}`;
 
   const resp = await fetch(url, {
     method:"POST",
@@ -501,8 +518,14 @@ async function consultPhilosopher(judge, question, model){
   const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
   const cleaned = text.replace(/```json|```/g,"").trim();
   const parsed = JSON.parse(cleaned);
-  const vote = (parsed.vote||"").toUpperCase().trim();
-  return { vote: vote==="YES"||vote==="NO"?vote:"YES", verdict:parsed.verdict||"The question itself reveals the answer.", explanation:parsed.explanation||"I vote this way because the question, when examined deeply, reveals its own answer." };
+  const rawVote = (parsed.vote||"").toUpperCase().trim();
+  const yesWords = ["YES","SÍ","SI","OUI","JA","نعم","はい","HAI","是","SIM"];
+  const noWords = ["NO","NON","NEIN","لا","いいえ","IIE","否","不","NÃO","NAO"];
+  let finalVote = "YES";
+  if(noWords.some(w=>rawVote.includes(w))) finalVote = "NO";
+  else if(yesWords.some(w=>rawVote.includes(w))) finalVote = "YES";
+  else finalVote = Math.random()>0.5?"YES":"NO";
+  return { vote: finalVote, verdict:parsed.verdict||"The question itself reveals the answer.", explanation:parsed.explanation||"I vote this way because the question, when examined deeply, reveals its own answer." };
 }
 
 // ========== CONVENE ==========
@@ -524,6 +547,20 @@ async function convene(){
 
   let ltIdx = 0;
   loadingInterval = setInterval(()=>{ ltIdx=(ltIdx+1)%texts.length; state.loadingText=texts[ltIdx]; const el=document.querySelector(".loading-text"); if(el)el.textContent=texts[ltIdx]; },2600);
+
+    // Start debate cross-talk
+    state.debateMessage = "";
+    setTimeout(()=>{
+      let di = 0;
+      const dtexts = DEBATE_TEXTS[state.lang]||DEBATE_TEXTS.en;
+      state.debateInterval = setInterval(()=>{
+        const thinking = state.judgeStates.filter(s=>s==="thinking").length;
+        if(thinking<2){ state.debateMessage=""; return; }
+        state.debateMessage = dtexts[di % dtexts.length];
+        di++;
+        render();
+      }, 1800);
+    }, 1800);
 
   // Start thinking text flicker
   thinkingIntervals.forEach(clearInterval);
@@ -566,6 +603,8 @@ async function convene(){
       if(state.judgeStates.every(s=>s==="done")){
         clearInterval(loadingInterval);
         thinkingIntervals.forEach(clearInterval);
+        if(state.debateInterval) clearInterval(state.debateInterval);
+        state.debateMessage = "";
         // Save history
         const yes=state.results.filter(r=>r?.vote==="YES").length;
         const no=state.results.filter(r=>r?.vote==="NO").length;
@@ -584,6 +623,7 @@ function resetApp(){
   state.question = t("should_i");
   state.judgeStates = ["idle","idle","idle"];
   state.results = [null,null,null];
+  state.debateMessage = ""; if(state.debateInterval) clearInterval(state.debateInterval);
   render();
 }
 
