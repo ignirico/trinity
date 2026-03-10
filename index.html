@@ -64,7 +64,7 @@ textarea,input{font-family:inherit;background:none;border:none;color:var(--text)
 .vc-name{font-size:11px;font-weight:700;color:#ffffffcc}
 .vc-vote{margin-left:auto;font-size:12px;font-weight:900}
 .vc-verdict{font-size:11px;color:#ffffffaa;font-style:italic;line-height:1.55;margin-bottom:7px}
-.vc-quote{font-size:9.5px;font-family:'Courier New',monospace;letter-spacing:0.05em;padding-top:6px;line-height:1.45;opacity:0.75}
+.vc-explanation{font-size:10px;color:#ffffff55;line-height:1.5;padding-top:5px}
 
 /* Verdict panel */
 .verdict-panel{background:#080808;border-radius:20px;padding:26px 20px;text-align:center;position:relative;overflow:hidden;animation:fadeSlideUp 0.5s cubic-bezier(0.16,1,0.3,1) both}
@@ -425,8 +425,7 @@ function render(){
         html += `<div class="verdict-card" style="border-color:${j.color}22;border-left-color:${j.color}66">
           <div class="vc-header"><span class="vc-sigil" style="color:${j.color}">${j.sigil}</span><span class="vc-name">${j.name}</span><span class="vc-vote" style="color:${vc};text-shadow:0 0 10px ${vc}">${r.vote}</span></div>
           <div class="vc-verdict">"${r.verdict}"</div>
-          <div style="height:1px;background:${j.color}1e"></div>
-          <div class="vc-quote" style="color:${j.color}">${r.quote}</div>
+          <div class="vc-explanation">${r.explanation}</div>
         </div>`;
       });
       html += `</div>`;
@@ -441,8 +440,7 @@ function render(){
       html += `<div class="verdict-card" style="border-color:${j.color}22;border-left-color:${j.color}66">
         <div class="vc-header"><span class="vc-sigil" style="color:${j.color}">${j.sigil}</span><span class="vc-name">${j.name}</span><span class="vc-vote" style="color:${vc};text-shadow:0 0 10px ${vc}">${r.vote}</span></div>
         <div class="vc-verdict">"${r.verdict}"</div>
-        <div style="height:1px;background:${j.color}1e"></div>
-        <div class="vc-quote" style="color:${j.color}">${r.quote}</div>
+        <div class="vc-explanation">${r.explanation}</div>
       </div>`;
     });
     html += `</div>`;
@@ -485,7 +483,7 @@ async function consultPhilosopher(judge, question, model){
   const existenceCtx = state.existence.trim() ? `\n\nIMPORTANT PERSONAL CONTEXT — You MUST factor this into your verdict. The person asking is: ${state.existence.trim()}\nTailor your judgment specifically to their situation, life stage, and circumstances. Reference their context directly in your verdict. A generic answer is unacceptable — make it deeply personal.` : "";
   const langName = AVAILABLE_LANGS.find(l=>l.code===state.lang)?.label||"English";
   const langInst = state.lang==="en"?"":(`\n\nIMPORTANT: You MUST respond entirely in ${langName}. All text in your JSON response (vote value YES/NO excluded) must be in ${langName}.`);
-  const systemInstruction = `${judge.personality}${existenceCtx}\n\nYou are deliberating on a yes/no question. You MUST choose either YES or NO — do not hedge.\nThink deeply from your philosophical perspective before voting.\nYour verdict must be a single powerful sentence unique to this specific question.\nYour quote must be a real or well-paraphrased quote from your actual philosophical works.${langInst}\n\nRespond ONLY with valid JSON, no markdown, no code fences:\n{"vote": "YES or NO", "verdict": "One powerful sentence from your philosophical perspective about THIS specific question.", "quote": "A relevant quote from your philosophy."}`;
+  const systemInstruction = `${judge.personality}${existenceCtx}\n\nYou are deliberating on a yes/no question. You MUST choose either YES or NO — do not hedge.\nThink deeply from your philosophical perspective before voting.\nYour verdict must be a single powerful sentence unique to this specific question.\nYour explanation must be 2-3 sentences explaining WHY you voted the way you did, grounded in your philosophy.${langInst}\n\nRespond ONLY with valid JSON, no markdown, no code fences:\n{"vote": "YES or NO", "verdict": "One powerful sentence from your philosophical perspective about THIS specific question.", "explanation": "2-3 sentences explaining WHY you voted this way, grounded in your philosophical principles."}`;
 
   const resp = await fetch(url, {
     method:"POST",
@@ -501,7 +499,7 @@ async function consultPhilosopher(judge, question, model){
   const cleaned = text.replace(/```json|```/g,"").trim();
   const parsed = JSON.parse(cleaned);
   const vote = (parsed.vote||"").toUpperCase().trim();
-  return { vote: vote==="YES"||vote==="NO"?vote:"YES", verdict:parsed.verdict||"The question itself reveals the answer.", quote:parsed.quote||"Know thyself." };
+  return { vote: vote==="YES"||vote==="NO"?vote:"YES", verdict:parsed.verdict||"The question itself reveals the answer.", explanation:parsed.explanation||"I vote this way because the question, when examined deeply, reveals its own answer." };
 }
 
 // ========== CONVENE ==========
@@ -552,9 +550,9 @@ async function convene(){
       } catch(e){
         console.error(`[Trinity] Error for ${js[idx].name}:`,e);
         const fallbacks = [
-          {vote:"YES",verdict:"The unexamined premise may hide the truest answer.",quote:"The only true wisdom is knowing you know nothing."},
-          {vote:"NO",verdict:"This path demands defiance — dare to question it.",quote:"He who has a why to live can bear almost any how."},
-          {vote:"YES",verdict:"In the face of the absurd, choose what makes you alive.",quote:"One must imagine Sisyphus happy."},
+          {vote:"YES",verdict:"The unexamined premise may hide the truest answer.",explanation:"I vote yes because the willingness to question is itself the beginning of wisdom. By engaging with this choice rather than avoiding it, you honor the examined life."},
+          {vote:"NO",verdict:"This path demands defiance — dare to question it.",explanation:"I vote no because true strength lies in resisting what the crowd rushes toward. The will to power demands you forge your own path, not follow the obvious one."},
+          {vote:"YES",verdict:"In the face of the absurd, choose what makes you alive.",explanation:"I vote yes because in a universe without inherent meaning, the only rebellion is to choose fully and passionately. This choice embraces life rather than retreating from it."},
         ];
         state.results[idx] = fallbacks[idx];
       }
